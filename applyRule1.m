@@ -2,17 +2,18 @@ function [A, nodes] = applyRule1(A, nodes)
     N = size(A,1);
 
     % Find all unused node (circle node)
-    newNodeIndex = -1;
+    circleNodeIndexes = [];
     for i = 1:N
         if isequal(nodes{i}.shape, 'o')
-            newNodeIndex = i;
-            break;
+            circleNodeIndexes = [circleNodeIndexes; i];
         end
     end
-
-    if newNodeIndex == -1
-        return; % No available nodes
+    
+    % Chose random node
+    if length(circleNodeIndexes) <=0
+        return; % Exit if no circle nodes are found
     end
+    newNodeIndex = circleNodeIndexes(randi(length(circleNodeIndexes)));
 
     % Find all edge of A in from of (nodea, nodeb)
     edges = []; % Initialize empty list
@@ -26,14 +27,16 @@ function [A, nodes] = applyRule1(A, nodes)
     end
 
     % Chose a random edge
-    randomEdgeIndex = randi(size(edges, 1)); % Select a random edge index
-    selectedEdge = edges(randomEdgeIndex, :); % Get the corresponding edge
+    idx = randi(size(edges,1));
+    e = edges(idx, :);
+    a = e(1);
+    b = e(2);
 
-    A(newNodeIndex, selectedEdge(1)) = 1;
-    A(newNodeIndex, selectedEdge(2)) = 1;
+    A(newNodeIndex, a) = 1;
+    A(newNodeIndex, b) = 1;
 
-    A(selectedEdge(1), newNodeIndex) = 1;
-    A(selectedEdge(2), newNodeIndex) = 1;
+    A(a, newNodeIndex) = 1;
+    A(b, newNodeIndex) = 1;
 
     nodes{newNodeIndex}.shape = 's'; % Update the shape of the new node
           

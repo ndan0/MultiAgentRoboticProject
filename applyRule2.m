@@ -2,27 +2,53 @@ function [A, nodes] = applyRule2(A, nodes)
     N = size(A,1);
 
     % Find all unused node (circle node)
-    newNode = -1;
+    circleNodeIndexes = [];
     for i = 1:N
         if isequal(nodes{i}.shape, 'o')
-            newNode = i;
-            break;
+            circleNodeIndexes = [circleNodeIndexes; i];
         end
     end
-
-    if newNode == -1
-        return; % No available nodes
+    
+    % Chose 1 random node
+    if length(circleNodeIndexes) <=0
+        return; % Exit if no circle nodes are found
     end
+    newNodeIndex = circleNodeIndexes(randi(length(circleNodeIndexes)));
 
-    % Find an active nodes to connect to
-    active = [];
+    % Find all edge of A in from of (nodea, nodeb)
+    edges = []; % Initialize empty list
+
     for i = 1:N
-        if ~isequal(nodes{i}.shape, 's')
-            active(end+1) = i;
+        for j = i+1:N  % check only upper triangle
+            if A(i,j) ~= 0
+                edges = [edges; i, j];
+            end
         end
     end
 
-    if numel(active) < 2
-        return; % Not enough active nodes
+    % Chose a random edge
+    idx = randi(size(edges,1));
+    e = edges(idx, :);
+    a = e(1);
+    b = e(2);
+
+    neighborsA = find(A(a,:) == 1);
+    neighborsB = find(A(b,:) == 1);
+    possibleC = unique([neighborsA neighborsB]);
+    possibleC(possibleC == a | possibleC == b) = [];
+    
+    if isempty(possibleC)
+        return; % cannot apply H2
     end
+    c = possibleC(randi(length(possibleC)));
+    
+    % Remove old edge
+    A(a,b) = 0; A(b,a) = 0;
+    
+    % Add correct Henneberg II edges:
+    A(newNodeIndex, a) = 1; A(a, newNodeIndex) = 1;
+    A(newNodeIndex, b) = 1; A(b, newNodeIndex) = 1;
+    A(newNodeIndex, c) = 1; A(c, newNodeIndex) = 1;
+
+    nodes{newNodeIndex}.shape = 's';
 end

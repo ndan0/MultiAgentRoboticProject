@@ -4,14 +4,14 @@ function hennesburg_gui()
 
     % USER INPUT
     Nmax = inputdlg("Enter the number of nodes:", ...
-                          "Number of Nodes", 1, {"5"});
+                          "Number of Nodes", 1, {"8"});
     Nmax = str2double(Nmax{1});
 
     if Nmax < 0
         error("Number need to be greater than 0");
     end
 
-    % INITIALIZE GRAPH
+    % INITIALIZE GRAPHS
     % Initialize adjacency matrix and coordinates
     A = zeros(Nmax); % Adjacency matrix for the graph
 
@@ -105,5 +105,4 @@ function hennesburg_gui()
             pause(0.5);
         end
     end
-
 end
