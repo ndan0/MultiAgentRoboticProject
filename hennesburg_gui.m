@@ -35,20 +35,23 @@ ax = axes('Parent',fig,'Position',[0.05 0.1 0.6 0.85]);
 hold(ax,'on');
 
 % Buttons
-uicontrol(fig,'Style','pushbutton','String','Rule 0 (Start)', ...
+btn_rule0 = uicontrol(fig,'Style','pushbutton','String','Rule 0 (Start)', ...
     'Units','normalized','Position',[0.7 0.85 0.25 0.08], ...
     'Callback', @(~,~)cb_rule0());
 
-uicontrol(fig,'Style','pushbutton','String','Rule 1 (Addition)',...
+btn_rule1 = uicontrol(fig,'Style','pushbutton','String','Rule 1 (Addition)',...
     'Units','normalized','Position',[0.7 0.75 0.25 0.08],...
+    'Enable','off', ...      % DISABLED UNTIL RULE 0
     'Callback',@(~,~)cb_rule1());
 
-uicontrol(fig,'Style','pushbutton','String','Rule 2 (Edge Splitting)',...
+btn_rule2 = uicontrol(fig,'Style','pushbutton','String','Rule 2 (Edge Splitting)',...
     'Units','normalized','Position',[0.7 0.65 0.25 0.08],...
+    'Enable','off', ...      % DISABLED UNTIL RULE 0
     'Callback',@(~,~)cb_rule2());
 
-uicontrol(fig,'Style','pushbutton','String','Auto Run',...
+btn_auto = uicontrol(fig,'Style','pushbutton','String','Auto Run',...
     'Units','normalized','Position',[0.7 0.55 0.25 0.08],...
+    'Enable','off', ...      % DISABLED UNTIL RULE 0
     'Callback',@(~,~)cb_auto());
 
 rigidityText = uicontrol(fig,'Style','text',...
@@ -60,49 +63,94 @@ updatePlot(ax, A, nodes);
 updateRigidityDisplay(rigidityText, A, Nmax);
 
 % GUI CALLBACKS
-function cb_rule0()
-    % Ask user to pick a node ID
-    choice = inputdlg("Enter the start node ID (1 to " + Nmax + "):", ...
-        "Choose Start Node", 1, {"1"});
-    if isempty(choice)
-        return;
-    end
-
-    start_node = str2double(choice{1});
-    if isnan(start_node) || start_node < 1 || start_node > Nmax
-        errordlg("Invalid node ID selected.");
-        return;
-    end
-
-    % Apply Rule 0
-    [A, nodes] = applyRule0(start_node, A, nodes);
-
-    % Update UI
-    updatePlot(ax, A, nodes);
-    updateRigidityDisplay(rigidityText, A, Nmax);
-end
-
-function cb_rule1()
-    [A, nodes] = applyRule1(A, nodes);
-    updatePlot(ax, A, nodes);
-    updateRigidityDisplay(rigidityText, A, Nmax);
-end
-
-function cb_rule2()
-    [A, nodes] = applyRule2(A, nodes);
-    updatePlot(ax, A, nodes);
-    updateRigidityDisplay(rigidityText, A, Nmax);
-end
-
-function cb_auto()
-    while numNodes < Nmax
-        if mod(numNodes,2)==0
-            cb_rule1();
-        else
-            cb_rule2();
+    function cb_rule0()
+        % Ask user to pick a node ID
+        choice = inputdlg("Enter the start node ID (1 to " + Nmax + "):", ...
+            "Choose Start Node", 1, {"1"});
+        if isempty(choice)
+            return;
         end
-        pause(0.5);
+
+        start_node = str2double(choice{1});
+        if isnan(start_node) || start_node < 1 || start_node > Nmax
+            errordlg("Invalid node ID selected.");
+            return;
+        end
+
+        % Apply Rule 0
+        [A, nodes] = applyRule0(start_node, A, nodes);
+
+         % ---- ENABLE remaining buttons ----
+        set(btn_rule1, 'Enable', 'on');
+        set(btn_rule2, 'Enable', 'on');
+        set(btn_auto,  'Enable', 'on');
+    
+        % ---- Disable Rule 0 so it cannot be used again ----
+        set(btn_rule0, 'Enable', 'off');
+
+
+        % Update UI
+        updatePlot(ax, A, nodes);
+        updateRigidityDisplay(rigidityText, A, Nmax);
     end
-end
+
+    function cb_rule1()
+        [A, nodes] = applyRule1(A, nodes);
+        updatePlot(ax, A, nodes);
+        updateRigidityDisplay(rigidityText, A, Nmax);
+    end
+
+    function cb_rule2()
+        [A, nodes] = applyRule2(A, nodes);
+        updatePlot(ax, A, nodes);
+        updateRigidityDisplay(rigidityText, A, Nmax);
+    end
+
+    function cb_auto()
+        while ishandle(fig)   % stop if window closed
+
+            % Count unused nodes
+            unused = find(strcmp(cellfun(@(n)n.shape, nodes, 'UniformOutput', false), 'o'));
+
+            if isempty(unused)
+                disp('Auto Run stopped: No unused nodes left.');
+                break;
+            end
+
+            % Randomly choose rule
+            rand_num = rand();
+            if rand_num < 0.5
+                [A2, nodes2] = applyRule1(A, nodes);
+            else
+                [A2, nodes2] = applyRule2(A, nodes);
+            end
+
+            % If rule did nothing, try the other rule
+            if isequal(A2,A)
+                if rand_num < 0.5
+                    [A2, nodes2] = applyRule2(A, nodes);
+                else
+                    [A2, nodes2] = applyRule1(A, nodes);
+                end
+            end
+
+            % If STILL nothing changed, stop auto mode
+            if isequal(A2,A)
+                disp("Auto Run stopped: No valid rules left.");
+                break;
+            end
+
+            % Commit graph update
+            A = A2;
+            nodes = nodes2;
+
+            % Refresh GUI
+            updatePlot(ax, A, nodes);
+            updateRigidityDisplay(rigidityText, A, Nmax);
+
+            drawnow;       % let GUI process clicks
+            pause(0.15);   % throttle speed
+        end
+    end
 
 end %hennesburg_gui
