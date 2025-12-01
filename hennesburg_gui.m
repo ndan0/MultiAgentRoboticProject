@@ -1,8 +1,8 @@
 function hennesburg_gui()
-% Main GUI for Hennesburg / Henneberg graph grammar
+    % Destroy all figure
+    close all;
 
     % USER INPUT
-
     Nmax = inputdlg("Enter the number of nodes:", ...
                           "Number of Nodes", 1, {"5"});
     Nmax = str2double(Nmax{1});
