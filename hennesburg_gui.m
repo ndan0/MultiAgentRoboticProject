@@ -51,6 +51,10 @@ uicontrol(fig,'Style','pushbutton','String','Auto Run',...
     'Units','normalized','Position',[0.7 0.55 0.25 0.08],...
     'Callback',@(~,~)cb_auto());
 
+uicontrol(fig,'Style','pushbutton','String','Run Consensus Equation',...
+    'Units','normalized','Position',[0.7 0.45 0.25 0.08],...
+    'Callback',@(~,~)cb_consensus());
+
 rigidityText = uicontrol(fig,'Style','text',...
     'Units','normalized','Position',[0.7 0.05 0.25 0.4],...
     'FontSize',12,'HorizontalAlignment','left');
@@ -105,13 +109,19 @@ function cb_auto()
     lamanRequired = 2*Nmax - 3;
     
     while edges < lamanRequired
-        if rand() < 0.5
+        if rand() < 0.3
             cb_rule1();
         else
             cb_rule2();
         end
         pause(0.5);
     end
+end
+
+function cb_consensus()
+    % [A, nodes] = consensus(A, nodes);
+    % updatePlot(ax, A, nodes);
+    % updateRigidityDisplay(rigidityText, A, Nmax);
 end
 
 end %hennesburg_gui
