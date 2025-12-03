@@ -95,8 +95,17 @@ function cb_rule2()
 end
 
 function cb_auto()
-    while numNodes < Nmax
-        if mod(numNodes,2)==0
+    % Extract the active portion of the adjacency matrix
+    Aactive = A(1:Nmax, 1:Nmax);
+
+    % Count undirected edges
+    edges = nnz(Aactive) / 2;
+
+    % Laman condition in 2D: 2n - 3 edges
+    lamanRequired = 2*Nmax - 3;
+    
+    while edges < lamanRequired
+        if rand() < 0.5
             cb_rule1();
         else
             cb_rule2();
