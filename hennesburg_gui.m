@@ -99,13 +99,10 @@ function cb_rule2()
 end
 
 function cb_auto()
-    % Extract the active portion of the adjacency matrix
     Aactive = A(1:Nmax, 1:Nmax);
 
-    % Count undirected edges
     edges = nnz(Aactive) / 2;
 
-    % Laman condition in 2D: 2n - 3 edges
     lamanRequired = 2*Nmax - 3;
     
     while edges < lamanRequired
