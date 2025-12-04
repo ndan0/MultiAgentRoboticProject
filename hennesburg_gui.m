@@ -54,6 +54,10 @@ btn_auto = uicontrol(fig,'Style','pushbutton','String','Auto Run',...
     'Enable','off', ...      % DISABLED UNTIL RULE 0
     'Callback',@(~,~)cb_auto());
 
+uicontrol(fig,'Style','pushbutton','String','Run Consensus Equation',...
+    'Units','normalized','Position',[0.7 0.45 0.25 0.08],...
+    'Callback',@(~,~)cb_consensus());
+
 rigidityText = uicontrol(fig,'Style','text',...
     'Units','normalized','Position',[0.7 0.05 0.25 0.4],...
     'FontSize',12,'HorizontalAlignment','left');
@@ -106,51 +110,27 @@ updateRigidityDisplay(rigidityText, A, Nmax);
         updateRigidityDisplay(rigidityText, A, Nmax);
     end
 
-    function cb_auto()
-        while ishandle(fig)   % stop if window closed
+function cb_auto()
+    Aactive = A(1:Nmax, 1:Nmax);
 
-            % Count unused nodes
-            unused = find(strcmp(cellfun(@(n)n.shape, nodes, 'UniformOutput', false), 'o'));
+    edges = nnz(Aactive) / 2;
 
-            if isempty(unused)
-                disp('Auto Run stopped: No unused nodes left.');
-                break;
-            end
-
-            % Randomly choose rule
-            rand_num = rand();
-            if rand_num < 0.5
-                [A2, nodes2] = applyRule1(A, nodes);
-            else
-                [A2, nodes2] = applyRule2(A, nodes);
-            end
-
-            % If rule did nothing, try the other rule
-            if isequal(A2,A)
-                if rand_num < 0.5
-                    [A2, nodes2] = applyRule2(A, nodes);
-                else
-                    [A2, nodes2] = applyRule1(A, nodes);
-                end
-            end
-
-            % If STILL nothing changed, stop auto mode
-            if isequal(A2,A)
-                disp("Auto Run stopped: No valid rules left.");
-                break;
-            end
-
-            % Commit graph update
-            A = A2;
-            nodes = nodes2;
-
-            % Refresh GUI
-            updatePlot(ax, A, nodes);
-            updateRigidityDisplay(rigidityText, A, Nmax);
-
-            drawnow;       % let GUI process clicks
-            pause(0.15);   % throttle speed
+    lamanRequired = 2*Nmax - 3;
+    
+    while edges < lamanRequired
+        if rand() < 0.3
+            cb_rule1();
+        else
+            cb_rule2();
         end
+        pause(0.5);
     end
+end
+
+function cb_consensus()
+    % [A, nodes] = consensus(A, nodes);
+    % updatePlot(ax, A, nodes);
+    % updateRigidityDisplay(rigidityText, A, Nmax);
+end
 
 end %hennesburg_gui

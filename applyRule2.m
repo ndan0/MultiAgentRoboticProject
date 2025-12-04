@@ -32,9 +32,21 @@ e = edges(idx, :);
 a = e(1);
 b = e(2);
 
+% Find possible nodes C that have a path from a or b
 neighborsA = find(A(a,:) == 1);
 neighborsB = find(A(b,:) == 1);
 possibleC = unique([neighborsA neighborsB]);
+% Expand possibleC to include neighbors of neighbors
+while true
+    [r, c] = find(A(possibleC, :) == 1);   % r: row in submatrix, c: column in A
+    newNeighbors = unique(c);              % column indices in A
+    newNeighbors = setdiff(newNeighbors, possibleC); % exclude already included nodes
+    if isempty(newNeighbors)
+        break;
+    end
+    possibleC = unique([possibleC(:); newNeighbors(:)]);
+end
+
 possibleC(possibleC == a | possibleC == b) = [];
 
 if isempty(possibleC)
