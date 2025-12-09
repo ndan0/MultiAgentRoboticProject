@@ -54,9 +54,9 @@ btn_auto = uicontrol(fig,'Style','pushbutton','String','Auto Run',...
     'Enable','off', ...      % DISABLED UNTIL RULE 0
     'Callback',@(~,~)cb_auto());
 
-uicontrol(fig,'Style','pushbutton','String','Run Consensus Equation',...
+uicontrol(fig,'Style','pushbutton','String','Run Formation Control',...
     'Units','normalized','Position',[0.7 0.45 0.25 0.08],...
-    'Callback',@(~,~)cb_consensus());
+    'Callback',@(~,~)cb_formation());
 
 rigidityText = uicontrol(fig,'Style','text',...
     'Units','normalized','Position',[0.7 0.05 0.25 0.4],...
@@ -110,27 +110,43 @@ updateRigidityDisplay(rigidityText, A, Nmax);
         updateRigidityDisplay(rigidityText, A, Nmax);
     end
 
-function cb_auto()
-    Aactive = A(1:Nmax, 1:Nmax);
+    function cb_auto()
+        Aactive = A(1:Nmax, 1:Nmax);
 
-    edges = nnz(Aactive) / 2;
+        edges = nnz(Aactive) / 2;
 
-    lamanRequired = 2*Nmax - 3;
-    
-    while edges < lamanRequired
-        if rand() < 0.3
-            cb_rule1();
-        else
-            cb_rule2();
+        lamanRequired = 2*Nmax - 3;
+        
+        while edges < lamanRequired
+            if rand() < 0.3
+                cb_rule1();
+            else
+                cb_rule2();
+            end
+            pause(0.5);
         end
-        pause(0.5);
     end
-end
 
-function cb_consensus()
-    % [A, nodes] = consensus(A, nodes);
-    % updatePlot(ax, A, nodes);
-    % updateRigidityDisplay(rigidityText, A, Nmax);
-end
+    function cb_formation()
+        % Create a separate figure for plotsol visualization
+        [X,n,N]= load_network(A, nodes);
+        fig_formation = figure('Name', 'Formation Control - Network Visualization', ...
+            'Position', [1150 100 600 600]);
+        ax_plotsol = axes('Parent', fig_formation);
+        hold(ax_plotsol, 'on');
+        plotsol(X, N, A, 2.0);
+        
+        % Compute desired distances from current shape
+        D = computeDesiredDistances(A, nodes);
+        
+        % Set formation control parameters
+        params.dt = 0.05;           % time step
+        params.k = .5;             % control gain (reduced to allow trajectory forces to dominate)
+        params.max_iters = 2000;    % maximum iterations
+        params.plot_every = 5;      % update plot every N iterations
+        
+        % Run formation control (pass plotsol axes for visualization)
+        [A, nodes] = formation(A, nodes, D, params, ax_plotsol);
+    end
 
 end %hennesburg_gui
