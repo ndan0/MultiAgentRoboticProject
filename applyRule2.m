@@ -15,7 +15,7 @@ if length(circleNodeIndexes) <=0
 end
 newNodeIndex = circleNodeIndexes(randi(length(circleNodeIndexes)));
 
-% Find all edge of A in from of (nodea, nodeb)
+% Find all edge of A in formm of (nodea, nodeb)
 edges = []; % Initialize empty list
 
 for i = 1:N
